@@ -703,3 +703,175 @@ python3 scripts/groundstation.py \
 4. 导航至参数配置页面...
 5. 读取当前参数表（共 150 个参数，备份已保存）
 6. 请告诉我要修改的 PID 参数值，或提供参数模板文件
+
+---
+
+## 已知问题和解决方案
+
+### 1. 飞控固件损坏（LED 不亮）
+
+**症状**：设置 `motor_pwm_protocol` 后，飞控 LED 不亮，USB 设备未识别。
+
+**原因**：某些 `motor_pwm_protocol` 设置可能导致飞控固件损坏或进入 DFU 模式。
+
+**解决方案**：
+1. **进入 DFU 模式**：
+   - 拔掉 USB 线
+   - 按住 **BOOT** 按钮（有些飞控叫 BOOT0 或 DFU 按钮）
+   - 插入 USB 线，保持按住 3 秒
+   - 松开按钮
+   - 查看系统中是否出现 "STM32 BOOTLOADER" 设备
+
+2. **刷写固件**：
+   - 打开 Betaflight Configurator
+   - 点击 "Flash Firmware"
+   - 选择固件版本（如 Betaflight 4.3.0）
+   - 点击 "Flash"
+   - 等待刷写完成
+
+3. **预防措施**：
+   - 使用 `skip_protocol=True` 参数（默认）
+   - 手动在 Betaflight Configurator 中设置 `motor_pwm_protocol`
+   - 设置前备份配置
+
+### 2. 飞控重启后 USB 设备未识别
+
+**症状**：`save` 命令后，飞控重启，但 `ls /dev/cu.*` 看不到设备。
+
+**原因**：macOS 的 USB 串口驱动需要时间重新加载。
+
+**解决方案**：
+1. **等待 10+ 秒**：让系统重新加载驱动
+2. **重新插拔 USB 线**：
+   - 拔掉 USB 线
+   - 等待 3 秒
+   - 重新插入
+   - 等待 5 秒
+3. **检查系统报告**：
+   - 点击屏幕左上角 **苹果图标** → **关于本机** → **系统报告**
+   - 查看 **USB** 部分，看是否有飞控设备
+
+### 3. 滤波器参数设置失败
+
+**症状**：PID 调整时，滤波器参数设置失败（可能参数名不正确）。
+
+**原因**：Betaflight 4.x 的滤波器参数名可能在不同版本间变化。
+
+**解决方案**：
+1. **手动确认参数名**：
+   ```bash
+   # 连接飞控并进入 CLI 模式
+   # 发送 dump 命令，查找滤波器相关参数
+   dump | grep -i "lpf\|filter"
+   ```
+
+2. **使用 Betaflight Configurator 手动设置**：
+   - 打开 Configurator
+   - 进入 "Configuration" 标签页
+   - 设置 Gyro/Motor 滤波器
+
+3. **报告问题**：
+   - 在 GitHub 上提交 Issue
+   - 附上 `dump` 输出和固件版本
+
+### 4. ESC 配置不完整
+
+**症状**：`do_esc()` 方法跳过了 `motor_pwm_protocol` 设置。
+
+**原因**：`motor_pwm_protocol` 设置可能导致 USB 断开（安全风险）。
+
+**解决方案**：
+1. **使用安全模式**（默认）：
+   - `skip_protocol=True`（跳过 `motor_pwm_protocol` 设置）
+   - 手动在 Betaflight Configurator 中设置
+
+2. **使用高级模式**（风险自负）：
+   - `skip_protocol=False`（启用 `motor_pwm_protocol` 设置）
+   - 确保飞控有 DFU 恢复能力
+   - 准备好刷写固件的工具
+
+### 5. 黑匣子分析功能未测试
+
+**症状**：`--action blackbox-analyze` 功能未充分测试。
+
+**原因**：需要真实的黑匣子日志文件（.bfl 文件）才能测试。
+
+**解决方案**：
+1. **手动导出黑匣子日志**：
+   - 在 Betaflight Configurator 中导出 `.bfl` 文件
+   - 放置到 `/tmp/` 或工作目录
+   - 运行分析命令
+
+2. **报告分析结果**：
+   - 将分析报告反馈给开发者
+   - 帮助完善分析算法
+
+### 6. Web 地面站功能未测试
+
+**症状**：`scripts/groundstation.py` 未充分测试。
+
+**原因**：需要浏览器环境和 Playwright 依赖。
+
+**解决方案**：
+1. **安装 Playwright**：
+   ```bash
+   pip install playwright==1.44.0
+   playwright install chromium
+   ```
+
+2. **测试网页地面站**：
+   - 打开 https://app.betaflight.com/#
+   - 运行 `python3 scripts/groundstation.py --action read`
+   - 查看输出和错误日志
+
+3. **报告问题**：
+   - 在 GitHub 上提交 Issue
+   - 附上错误截图和日志
+
+---
+
+## 故障排查快速参考
+
+| 问题 | 检查步骤 | 解决方案 |
+|------|----------|----------|
+| 飞控未检测到 | `ls /dev/cu.* \| grep usb` | 重新插拔 USB，等待 5 秒 |
+| CLI 模式无法进入 | 打开 Configurator，点击 "CLI" 标签 | 手动发送 `#` 命令 |
+| USB 断开 after save | 等待 10 秒，检查 `ls /dev/cu.*` | 重新插拔 USB，检查系统报告 |
+| 固件损坏（LED 不亮） | 检查系统报告中是否有 DFU 设备 | 进入 DFU 模式，刷写固件 |
+| 参数设置失败 | 手动在 CLI 中执行 `set param=value` | 检查参数名是否正确，查看 `dump` 输出 |
+| 滤波器设置失败 | 查看调参报告中的错误信息 | 手动在 Configurator 中设置，报告问题 |
+
+---
+
+## 更新日志
+
+### v1.0 (2026-06-21)
+
+**初始版本**：
+- ✅ Rate 调节（4 种风格）
+- ✅ PID 调节（4 种预设）
+- ✅ VTX 配置
+- ✅ OSD 配置
+- ✅ 初始化（恢复出厂设置）
+- ⚠️ ESC 配置（部分，跳过危险操作）
+- ❌ 黑匣子分析（未测试）
+- ❌ Web 地面站（未测试）
+
+**修复**：
+- ✅ 修复 `fc_serial.py` 中 `detect_device()` 的 None 值错误
+- ✅ 修复 `connect()` 方法正确进入 CLI 模式
+- ✅ 修复 `save_and_reboot()` 方法正确处理重启
+- ✅ 更新 `RATE_PRESETS` 使用 Betaflight 4.x 参数名
+- ✅ 更新 `PID_PRESETS` 使用 Betaflight 4.x 参数名
+- ✅ 添加 `FILTER_PRESETS` 定义（Betaflight 4.x 参数）
+- ✅ 修复 `do_esc()` 方法（添加 `skip_protocol` 参数）
+- ✅ 修复 `save_and_reboot()` 方法（增加详细警告）
+
+**已知问题**：
+- ⚠️ 滤波器参数名可能在不同 Betaflight 版本间变化
+- ⚠️ ESC 配置不完整（跳过了 `motor_pwm_protocol` 设置）
+- ❌ 黑匣子分析功能未测试
+- ❌ Web 地面站功能未测试
+
+---
+

@@ -237,7 +237,17 @@ class FlightController:
             self.port = devices[0]
             print(f"✅ 重新检测到飞控: {self.port}")
         else:
-            print("⚠️ 未检测到飞控设备，使用原端口重试")
+            print("⚠️ 未检测到飞控设备")
+            print("可能的原因：")
+            print("  1. USB 线松动或断开")
+            print("  2. 飞控进入 DFU 模式（固件损坏）")
+            print("  3. macOS 驱动未加载")
+            print("")
+            print("解决方案：")
+            print("  1. 重新插拔 USB 线")
+            print("  2. 等待 10 秒，让系统重新加载驱动")
+            print("  3. 如果 LED 不亮，需要刷写固件（DFU 模式）")
+            print("")
             # 等待更长时间，让 macOS 重新加载驱动
             print("等待 10 秒，让系统重新加载驱动...")
             time.sleep(10)

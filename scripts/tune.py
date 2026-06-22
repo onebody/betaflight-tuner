@@ -87,6 +87,30 @@ PID_PRESETS = {
     },
 }
 
+# Betaflight 4.x 滤波器参数（需要确认）
+FILTER_PRESETS = {
+    "default": {
+        "gyro_lpf1_type": "PT1",
+        "gyro_lpf1_static_hz": "150",
+        "dterm_lpf1_type": "PT1",
+        "dterm_lpf1_static_hz": "100",
+        "gyro_lpf2_type": "PT1",
+        "gyro_lpf2_static_hz": "150",
+        "dterm_lpf2_type": "PT1",
+        "dterm_lpf2_static_hz": "150",
+    },
+    "smooth": {
+        "gyro_lpf1_type": "PT1",
+        "gyro_lpf1_static_hz": "100",
+        "dterm_lpf1_type": "PT1",
+        "dterm_lpf1_static_hz": "80",
+        "gyro_lpf2_type": "PT1",
+        "gyro_lpf2_static_hz": "100",
+        "dterm_lpf2_type": "PT1",
+        "dterm_lpf2_static_hz": "120",
+    },
+}
+
 VTX_BANDS = {1: "A", 2: "B", 3: "E", 4: "F", 5: "R"}
 VTX_POWER_MAP = {0: "25mW", 1: "200mW", 2: "500mW", 3: "800mW", 4: "1600mW+"}
 
@@ -298,12 +322,14 @@ class BetaflightTuner:
                 self.fc.set_param(key, val)
                 self._log(f"  设置 {key} = {val}")
 
-            # 注释：Betaflight 4.x 滤波器参数名待确认
-            # 暂时跳过滤波器设置，用户可通过 Betaflight Configurator 配置
-            # fp = FILTER_PRESETS["default"]
-            # for key, val in fp.items():
-            #     self.fc.set_param(key, val)
-            #     self._log(f"  滤波 {key} = {val}")
+            # 写入滤波器设置（Betaflight 4.x 参数）
+            try:
+                fp = FILTER_PRESETS["default"]
+                for key, val in fp.items():
+                    self.fc.set_param(key, val)
+                    self._log(f"  滤波 {key} = {val}")
+            except Exception as e:
+                self._log(f"  滤波器设置失败（可能参数名不正确）：{e}", "WARN")
 
             # 启用推荐功能（如果这些参数存在）
             self.fc.set_param("dshot_bidir", "ON")
@@ -458,10 +484,15 @@ class BetaflightTuner:
 
     # ── 7. ESC 参数设置 ──────────────────────────────────
 
-    def do_esc(self, protocol: str = "DSHOT600", bidir: bool = True) -> Dict:
-        """配置 ESC 参数（跳过 motor_pwm_protocol 设置）"""
+    def do_esc(self, protocol: str = "DSHOT600", bidir: bool = True, skip_protocol: bool = True) -> Dict:
+        """
+        配置 ESC 参数
+        :param protocol: DSHOT 协议（DSHOT600/DSHOT300/DSHOT150）
+        :param bidir: 是否启用双向 DShot
+        :param skip_protocol: 是否跳过 motor_pwm_protocol 设置（安全模式）
+        """
         self._log(f"开始配置 ESC：bidir={bidir}")
-        r = {"protocol": "skip", "bidir": bidir,
+        r = {"protocol": protocol if not skip_protocol else "skip", "bidir": bidir,
               "before": {}, "after": {}, "result": "unknown"}
 
         try:
@@ -474,8 +505,15 @@ class BetaflightTuner:
                 except:
                     pass
 
-            # 跳过 motor_pwm_protocol 设置（可能导致 USB 断开）
-            self._log("  跳过 motor_pwm_protocol 设置（需通过 Betaflight Configurator 设置）")
+            # 警告：motor_pwm_protocol 设置可能导致 USB 断开
+            if not skip_protocol:
+                self._log("⚠️ 警告：设置 motor_pwm_protocol 可能导致 USB 断开！", "WARN")
+                self._log("   如果 USB 断开，请重新插拔 USB 线并等待 10+ 秒", "WARN")
+                self.fc.set_param("motor_pwm_protocol", protocol)
+                self._log(f"  设置 motor_pwm_protocol = {protocol}")
+            else:
+                self._log("  跳过 motor_pwm_protocol 设置（安全模式）")
+                self._log("  如需设置，请使用 Betaflight Configurator 手动配置", "INFO")
 
             if bidir:
                 self.fc.set_param("dshot_bidir", "ON")
