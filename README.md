@@ -1,135 +1,135 @@
-# Betaflight Tuner Skill
+# Betaflight 调参技能包
 
-WorkBuddy AI Agent skill for Betaflight flight controller tuning.
+WorkBuddy AI Agent 技能包，用于 Betaflight 飞控固件调参。
 
-## Features
+## 功能特性
 
-- 🔧 **CLI Serial Mode**: Direct connection to flight controller via USB serial
-- 🌐 **Web Ground Station Mode**: Automate Betaflight Configurator web version
-- 📊 **Rate Tuning**: Support 4 styles (freestyle, race, smooth, aggressive)
-- 🎯 **PID Tuning**: Support 4 presets (5inch, 5inch_race, 3inch, 7inch)
-- 📡 **VTX Configuration**: Set band, channel, power
-- 📺 **OSD Configuration**: Set units, alarm thresholds
-- ⚙️ **ESC Configuration**: DShot settings, RPM filter
-- 📦 **Preset Import**: Import .BFL preset files
-- 📈 **Blackbox Analysis**: Analyze flight logs (experimental)
+- 🔧 **CLI 串口模式**：通过 USB 串口直接连接飞控
+- 🌐 **Web 地面站模式**：自动化 Betaflight Configurator 网页版
+- 📊 **Rate 调节**：支持 4 种风格（自由式、竞速、平滑、激进）
+- 🎯 **PID 调节**：支持 4 种预设（5寸、5寸竞速、3寸、7寸）
+- 📡 **图传配置**：设置频段、频道、功率
+- 📺 **OSD 配置**：设置单位、报警阈值
+- ⚙️ **电调配置**：DShot 设置、RPM 滤波
+- 📦 **预设导入**：导入 .BFL 预设文件
+- 📈 **黑匣子分析**：分析飞行日志（实验性）
 
-## Installation
+## 安装方法
 
-1. Clone this repository or download the skill package
-2. Import into WorkBuddy: `/skill-installer install --path /path/to/betaflight-tuner`
-3. Connect flight controller via USB
-4. Enter CLI mode in Betaflight Configurator
-5. Ask AI: "Help me tune my 5-inch racing drone"
+1. 克隆本仓库或下载技能包
+2. 导入到 WorkBuddy：在 WorkBuddy 中选择"导入技能"，选择本目录
+3. 通过 USB 连接飞控
+4. 在 Betaflight Configurator 中进入 CLI 模式
+5. 对 AI 说："帮我调参，这是台 5 寸竞速机"
 
-## Requirements
+## 环境要求
 
 - Python 3.6+
-- pyserial (for CLI serial mode): `pip install pyserial`
-- playwright (for web ground station mode, optional): `pip install playwright`
+- pyserial（CLI 串口模式）：`pip install pyserial`
+- playwright（Web 地面站模式，可选）：`pip install playwright`
 
-## Usage
+## 使用方法
 
-### CLI Serial Mode
+### CLI 串口模式
 
 ```bash
-# Initialize (restore factory settings)
+# 初始化（恢复出厂设置）
 python3 scripts/tune.py --port /dev/cu.usbmodem0x80000001 --action init
 
-# Set Rate (race style)
+# 设置 Rate（竞速风格）
 python3 scripts/tune.py --port /dev/cu.usbmodem0x80000001 --action rate --style race
 
-# Set PID (5-inch preset)
+# 设置 PID（5寸预设）
 python3 scripts/tune.py --port /dev/cu.usbmodem0x80000001 --action pid --preset 5inch
 
-# Full tuning
+# 完整调参
 python3 scripts/tune.py --port /dev/cu.usbmodem0x80000001 --action all --style race --preset 5inch_race
 ```
 
-### Web Ground Station Mode
+### Web 地面站模式
 
 ```bash
 python3 scripts/groundstation.py --action read --output /tmp/fc_params.json
 ```
 
-## Project Structure
+## 项目结构
 
 ```
 betaflight-tuner/
-├── SKILL.md              # Skill definition and usage guide
+├── SKILL.md              # 技能定义和使用指南
 ├── scripts/
-│   ├── fc_serial.py     # Serial communication module
-│   ├── tune.py          # Main tuning script
-│   └── groundstation.py # Web ground station automation
-├── references/          # Reference documentation
-├── templates/           # Report templates
-└── evals/              # Test cases
+│   ├── fc_serial.py     # 串口通信模块
+│   ├── tune.py          # 调参主脚本
+│   └── groundstation.py # Web 地面站自动化
+├── references/          # 参考文档
+├── templates/           # 报告模板
+└── evals/              # 测试用例
 ```
 
-## Safety Warnings
+## 安全警告
 
-⚠️ **Always backup your configuration before tuning!**
+⚠️ **调参前务必备份配置！**
 
-⚠️ **Some settings may cause USB disconnection. Reconnect USB if needed.**
+⚠️ **某些设置可能导致 USB 断开。如需重连，请重新插拔 USB。**
 
-⚠️ **Test motors without props first!**
+⚠️ **先在不装桨叶的情况下测试电机！**
 
-⚠️ **ESC protocol settings may cause firmware issues. Use with caution.**
+⚠️ **电调协议设置可能导致固件问题。请谨慎使用。**
 
-## Tested Configurations
+## 已测试配置
 
 - ✅ Betaflight 4.3.0
-- ✅ Rate tuning (all styles)
-- ✅ PID tuning (all presets)
-- ✅ VTX configuration
-- ✅ OSD configuration
-- ⚠️ ESC configuration (partial, skipped dangerous operations)
-- ❌ Blackbox analysis (not tested)
-- ❌ Web ground station (not tested)
+- ✅ Rate 调节（所有风格）
+- ✅ PID 调节（所有预设）
+- ✅ 图传配置
+- ✅ OSD 配置
+- ⚠️ 电调配置（部分，跳过了危险操作）
+- ❌ 黑匣子分析（未测试）
+- ❌ Web 地面站（未测试）
 
-## Known Issues
+## 已知问题
 
-1. **Firmware corruption**: Setting `motor_pwm_protocol` may cause USB disconnection
-2. **ESC config incomplete**: Skipped `motor_pwm_protocol` setting (risky)
-3. **Filter params**: Betaflight 4.x parameter names to be confirmed
-4. **Reconnect timeout**: May need to wait 10+ seconds after reboot
+1. **固件损坏**：设置 `motor_pwm_protocol` 可能导致 USB 断开
+2. **电调配置不完整**：跳过了 `motor_pwm_protocol` 设置（有风险）
+3. **滤波器参数**：Betaflight 4.x 参数名待确认
+4. **重连超时**：重启后可能需要等待 10+ 秒
 
-## Troubleshooting
+## 故障排查
 
-### Flight controller not detected
+### 飞控未检测到
 
 ```bash
-# Check serial devices
+# 检查串口设备
 ls -la /dev/cu.* | grep -E "(usbmodem|usbserial)"
 
-# If not detected, reconnect USB and wait 5 seconds
+# 如果未检测到，重新连接 USB 并等待 5 秒
 ```
 
-### CLI mode not entering
+### 无法进入 CLI 模式
 
-1. Open Betaflight Configurator
-2. Connect to flight controller
-3. Click "CLI" tab
-4. Send `#` command manually to enter CLI mode
+1. 打开 Betaflight Configurator
+2. 连接到飞控
+3. 点击 "CLI" 标签
+4. 手动发送 `#` 命令进入 CLI 模式
 
-### USB disconnected after setting ESC protocol
+### 设置电调协议后 USB 断开
 
-1. Reconnect USB
-2. Wait for system to reload driver (10+ seconds)
-3. If still not detected, may need to reflash firmware
+1. 重新连接 USB
+2. 等待系统重新加载驱动（10+ 秒）
+3. 如果仍然未检测到，可能需要重新刷写固件
 
-## Contributing
+## 贡献
 
-Issues and pull requests are welcome!
+欢迎提交 Issue 和 Pull Request！
 
-## License
+## 许可证
 
 MIT
 
-## Author
+## 作者
 
 onebody
 
-## Version
+## 版本
 
 v1.0 - 2026-06-21
