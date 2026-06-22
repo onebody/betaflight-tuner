@@ -259,7 +259,7 @@ AI 读取报告内容并呈现给用户，或使用 `deliver_attachments` 发送
 1. **检查浏览器自动化 skill 是否可用**：
    - 优先使用 `browser-act` skill（如果已安装）
    - 备选使用 `Playwright` 或 `browser-use` skill
-   - 如均未安装，提示用户安装：`pip install playwright && playwright install`
+   - 如均未安装，提示用户安装：`pip install playwright==1.44.0 && playwright install`
 
 2. **获取地面站信息**（如用户未提供，则询问）：
    - 地面站 URL（默认：`https://app.betaflight.com/#`）
@@ -519,7 +519,7 @@ AI 读取报告内容并呈现给用户，或使用 `deliver_attachments` 发送
 首次使用时，确保 `pyserial` 已安装（用于串口通信）：
 
 ```bash
-/Users/fcj/.workbuddy/binaries/python/versions/3.13.12/bin/python3 -m pip install pyserial
+/Users/fcj/.workbuddy/binaries/python/versions/3.13.12/bin/python3 -m pip install pyserial==3.5
 ```
 
 #### 脚本说明
@@ -551,7 +551,7 @@ AI 读取报告内容并呈现给用户，或使用 `deliver_attachments` 发送
 
 ```bash
 # 安装 Playwright（推荐）
-/Users/fcj/.workbuddy/binaries/python/versions/3.13.12/bin/python3 -m pip install playwright -i https://pypi.tuna.tsinghua.edu.cn/simple
+/Users/fcj/.workbuddy/binaries/python/versions/3.13.12/bin/python3 -m pip install playwright==1.44.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
 /Users/fcj/.workbuddy/binaries/python/versions/3.13.12/bin/python3 -m playwright install chromium
 
 # 或使用 browser-act skill（如果已安装）
